@@ -1,0 +1,161 @@
+/* =====================================================
+   Tailwind v4 — all config lives here, no tailwind.config.ts
+   ===================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap');
+@import "tailwindcss";
+
+/* ---- Design tokens via @theme (Tailwind v4 syntax) ---- */
+@theme {
+  /* Fonts */
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+
+  /* Colors */
+  --color-void:       #080b12;
+  --color-surface:    #0e1420;
+  --color-card:       #131923;
+  --color-border:     #1e2a3a;
+  --color-accent:     #00e5ff;
+  --color-accent-dim: #00b8cc;
+  --color-gold:       #f5c542;
+  --color-gold-dim:   #c49a1e;
+  --color-muted:      #4a6080;
+  --color-text:       #c8d8e8;
+  --color-text-bright:#eef4ff;
+
+  /* Custom animations */
+  --animate-fade-in:  fadeIn 0.4s ease forwards;
+  --animate-slide-up: slideUp 0.4s ease forwards;
+  --animate-shimmer:  shimmer 1.5s linear infinite;
+  --animate-glow-pulse: glowPulse 2s ease-in-out infinite;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4,0,0.6,1) infinite;
+
+  /* Keyframes */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 8px 2px rgba(0,229,255,.15); }
+    50%       { box-shadow: 0 0 20px 6px rgba(0,229,255,.35); }
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%     { opacity: .5; }
+  }
+}
+
+/* ---- Base styles ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(0,229,255,.20);
+  color: var(--color-accent);
+}
+
+::-webkit-scrollbar          { width: 4px; }
+::-webkit-scrollbar-track    { background: var(--color-void); }
+::-webkit-scrollbar-thumb    { background: var(--color-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
+
+/* hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* ---- Utility classes ---- */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.accent-glow {
+  box-shadow: 0 0 20px rgba(0,229,255,.15), 0 0 40px rgba(0,229,255,.05);
+}
+
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 0%,
+    var(--color-border)  50%,
+    var(--color-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Countdown digit */
+.countdown-digit {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  background: rgba(0,229,255,.06);
+  border: 1px solid rgba(0,229,255,.15);
+  border-radius: 6px;
+  padding: 2px 6px;
+  display: inline-block;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Reusable button/input helpers (used in className strings) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-accent);
+  color: var(--color-void);
+  font-family: var(--font-display);
+  font-weight: 600;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  transition: background-color .2s, transform .1s;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary:hover  { background-color: var(--color-accent-dim); }
+.btn-primary:active { transform: scale(.97); }
+.btn-primary:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.input-field {
+  width: 100%;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--color-text-bright);
+  font-family: var(--font-body);
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+}
+.input-field::placeholder { color: var(--color-muted); }
+.input-field:focus {
+  border-color: rgba(0,229,255,.6);
+  box-shadow: 0 0 0 3px rgba(0,229,255,.08);
+}
