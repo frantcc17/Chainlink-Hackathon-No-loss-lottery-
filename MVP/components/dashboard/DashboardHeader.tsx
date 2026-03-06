@@ -1,12 +1,54 @@
 "use client";
 
-import { Wallet, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Wallet, Zap, CheckCircle2 } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { formatUSDC } from "@/utils";
 
 export function DashboardHeader() {
   const { email, balance } = useUserStore();
+  const [account, setAccount] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+
   const shortEmail = email?.split("@")[0] ?? "anon";
+
+  // Verificar si ya estaba conectado al cargar
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (typeof window !== "undefined" && window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: "eth_accounts" });
+          if (accounts.length > 0) setAccount(accounts[0]);
+        } catch (err) {
+          console.error("Error checking wallet connection", err);
+        }
+      }
+    };
+    checkConnection();
+  }, []);
+
+  const connectWallet = async () => {
+    if (typeof window !== "undefined" && window.ethereum) {
+      setIsConnecting(true);
+      try {
+        const accounts = await window.ethereum.request({
+          method: "eth_requestAccounts",
+        });
+        setAccount(accounts[0]);
+      } catch (error) {
+        console.error("User rejected connection");
+      } finally {
+        setIsConnecting(false);
+      }
+    } else {
+      alert("MetaMask no está instalado. Por favor, instálalo para continuar.");
+    }
+  };
+
+  // Formatear dirección para mostrar: 0x123...abcd
+  const shortAddress = account 
+    ? `${account.slice(0, 5)}...${account.slice(-4)}` 
+    : "";
 
   return (
     <header
@@ -69,15 +111,29 @@ export function DashboardHeader() {
           </div>
 
           <button
-            disabled
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-not-allowed opacity-50"
-            style={{ borderColor: "rgba(30,42,58,0.5)", color: "var(--color-muted)" }}
-            title="Connect wallet — coming soon"
+            onClick={connectWallet}
+            disabled={isConnecting || !!account}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all ${
+              account ? "cursor-default" : "hover:bg-white/5 active:scale-95"
+            }`}
+            style={{ 
+              borderColor: account ? "rgba(0,229,255,0.4)" : "var(--color-border)",
+              color: account ? "var(--color-accent)" : "var(--color-text-bright)"
+            }}
           >
-            <Wallet size={14} />
-            <span className="text-xs hidden sm:block" style={{ fontFamily: "var(--font-mono)" }}>
-              Connect
-            </span>
+            {account ? (
+              <>
+                <CheckCircle2 size={14} className="text-emerald-400" />
+                <span className="text-xs font-mono">{shortAddress}</span>
+              </>
+            ) : (
+              <>
+                <Wallet size={14} />
+                <span className="text-xs hidden sm:block" style={{ fontFamily: "var(--font-mono)" }}>
+                  {isConnecting ? "Connecting..." : "Connect"}
+                </span>
+              </>
+            )}
           </button>
         </div>
       </div>
