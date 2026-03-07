@@ -1,54 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Wallet, Zap, CheckCircle2 } from "lucide-react";
+import { Wallet, Zap, CheckCircle2, Loader2, LogOut } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { formatUSDC } from "@/utils";
 
+// --- NUEVAS IMPORTACIONES WEB3 ---
+import { useAccount, useConnect, useDisconnect, useBalance } from 'wagmi';
+import { injected } from 'wagmi/connectors';
+import { useEffect } from "react";
+// ---------------------------------
+
 export function DashboardHeader() {
-  const { email, balance } = useUserStore();
-  const [account, setAccount] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const { email } = useUserStore();
+  
+  // Hooks de Wagmi para estado global de la wallet
+  const { address, isConnected, isConnecting } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+  
+  // Obtenemos el balance real de la blockchain (opcional, si quieres el nativo)
+  const { data: blockchainBalance } = useBalance({
+    address: address,
+  });
 
   const shortEmail = email?.split("@")[0] ?? "anon";
 
-  // Verificar si ya estaba conectado al cargar
-  useEffect(() => {
-    const checkConnection = async () => {
-      if (typeof window !== "undefined" && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: "eth_accounts" });
-          if (accounts.length > 0) setAccount(accounts[0]);
-        } catch (err) {
-          console.error("Error checking wallet connection", err);
-        }
-      }
-    };
-    checkConnection();
-  }, []);
+  // Formatear dirección para mostrar: 0x123...abcd
+  const shortAddress = address 
+    ? `${address.slice(0, 5)}...${address.slice(-4)}` 
+    : "";
 
-  const connectWallet = async () => {
-    if (typeof window !== "undefined" && window.ethereum) {
-      setIsConnecting(true);
-      try {
-        const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        setAccount(accounts[0]);
-      } catch (error) {
-        console.error("User rejected connection");
-      } finally {
-        setIsConnecting(false);
-      }
+  const handleAuth = () => {
+    if (isConnected) {
+      // Opcional: Podrías poner un menú desplegable para desconectar
+      if (confirm("Disconnect wallet?")) disconnect();
     } else {
-      alert("MetaMask no está instalado. Por favor, instálalo para continuar.");
+      connect({ connector: injected() });
     }
   };
-
-  // Formatear dirección para mostrar: 0x123...abcd
-  const shortAddress = account 
-    ? `${account.slice(0, 5)}...${account.slice(-4)}` 
-    : "";
 
   return (
     <header
@@ -91,6 +80,7 @@ export function DashboardHeader() {
 
         {/* Right: balance + wallet */}
         <div className="flex items-center gap-2">
+          {/* Balance Section (Muestra balance real si está conectado) */}
           <div
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border"
             style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
@@ -100,37 +90,43 @@ export function DashboardHeader() {
               className="text-sm font-semibold"
               style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-bright)" }}
             >
-              {formatUSDC(balance)}
+              {isConnected && blockchainBalance 
+                ? Number(blockchainBalance.formatted).toFixed(4) 
+                : "0.00"}
             </span>
             <span
               className="text-xs"
               style={{ fontFamily: "var(--font-mono)", color: "var(--color-muted)" }}
             >
-              USDC
+              {blockchainBalance?.symbol || "ETH"}
             </span>
           </div>
 
+          {/* Wallet Button */}
           <button
-            onClick={connectWallet}
-            disabled={isConnecting || !!account}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all ${
-              account ? "cursor-default" : "hover:bg-white/5 active:scale-95"
+            onClick={handleAuth}
+            disabled={isConnecting}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all active:scale-95 ${
+              isConnected ? "hover:border-red-500/50 group" : "hover:bg-white/5"
             }`}
             style={{ 
-              borderColor: account ? "rgba(0,229,255,0.4)" : "var(--color-border)",
-              color: account ? "var(--color-accent)" : "var(--color-text-bright)"
+              borderColor: isConnected ? "rgba(0,229,255,0.4)" : "var(--color-border)",
+              color: isConnected ? "var(--color-accent)" : "var(--color-text-bright)"
             }}
           >
-            {account ? (
+            {isConnecting ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : isConnected ? (
               <>
-                <CheckCircle2 size={14} className="text-emerald-400" />
+                <CheckCircle2 size={14} className="text-emerald-400 group-hover:hidden" />
+                <LogOut size={14} className="text-red-400 hidden group-hover:block" />
                 <span className="text-xs font-mono">{shortAddress}</span>
               </>
             ) : (
               <>
                 <Wallet size={14} />
                 <span className="text-xs hidden sm:block" style={{ fontFamily: "var(--font-mono)" }}>
-                  {isConnecting ? "Connecting..." : "Connect"}
+                  Connect
                 </span>
               </>
             )}
