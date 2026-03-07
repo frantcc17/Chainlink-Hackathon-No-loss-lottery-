@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Web3Provider } from "@/components/Web3Provider"; // Importamos el nuevo componente
 
 export const metadata: Metadata = {
-  title: "Investmen Lottery — Web3 Raffle Protocol",
+  title: "Investment Lottery — Web3 Raffle Protocol",
   description: "Buy raffle entries, earn yield. Powered by Chainlink VRF.",
 };
 
@@ -14,7 +15,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-void grid-bg">
-        {children}
+        {/* Envolvemos children con el Web3Provider */}
+        <Web3Provider>
+          {children}
+        </Web3Provider>
       </body>
     </html>
   );
