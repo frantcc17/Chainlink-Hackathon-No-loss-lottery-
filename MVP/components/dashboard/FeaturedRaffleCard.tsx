@@ -1,5 +1,4 @@
-Aquí tienes el código corregido con args: [] en las dos funciones problemáticas:
-tsx"use client";
+"use client";
 
 import { Ticket, TrendingUp, Users, Loader2, CheckCircle2, LogOut, Dices, Gift } from "lucide-react";
 import { Raffle } from "@/stores/raffleStore";
