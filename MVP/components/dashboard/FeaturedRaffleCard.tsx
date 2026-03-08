@@ -31,22 +31,43 @@ export function FeaturedRaffleCard({ raffle }: FeaturedRaffleCardProps) {
     isSuccess 
   } = useWaitForTransactionReceipt({ hash });
 
- // Ubicación: components/dashboard/FeaturedRaffleCard.tsx
+ const handleAction = async () => {
+  try {
+    // 1. Limpiamos el ID por si acaso sigue viniendo como "raffle-001"
+    const numericId = raffle.id.replace(/\D/g, "");
+    
+    console.log("Datos que se enviarán:", {
+      id: numericId,
+      price: raffle.ticketPrice,
+      address: 'TU_DIRECCION_AQUI'
+    });
 
-const handleAction = () => {
-  // 1. Limpiamos el ID: si es "raffle-001", se convierte en "001"
-  const numericId = raffle.id.replace(/\D/g, ""); 
+    // 2. Llamada al contrato
+    await writeContract({
+      address: '0x...', // REVISA: Que esta sea la dirección del contrato desplegado
+      abi: prizePoolAbi,
+      functionName: 'enterRaffle', // REVISA: Que el nombre sea igual en Remix
+      args: [BigInt(numericId)],
+      value: parseUnits(raffle.ticketPrice.toString(), 6), 
+    });
 
-  // 2. Ejecutamos la transacción
-  writeContract({
-    address: '0xTU_DIRECCION_DEL_CONTRATO', // Asegúrate de tener la dirección aquí
-    abi: prizePoolAbi,
-    functionName: 'enterRaffle',
-    args: [BigInt(numericId)], // Ahora pasamos el número limpio como BigInt
-    value: parseUnits(raffle.ticketPrice.toString(), 6), 
-  });
+  } catch (error: any) {
+    // ESTO VA A MOSTRAR EL ERROR EN ROJO PERO MÁS CLARO
+    console.error("DETALLE DEL ERROR:", error);
+    
+    // Si el error es porque la función no existe:
+    if (error.message.includes("is not a function")) {
+        alert("El nombre 'enterRaffle' no existe en tu contrato. Revisa Remix.");
+    } 
+    // Si el error es de parámetros:
+    else if (error.message.includes("BigInt")) {
+        alert("Error con el ID de la rifa. No se pudo convertir a número.");
+    }
+    else {
+        alert("Error de Blockchain: " + error.shortMessage || error.message);
+    }
+  }
 };
-
   const isBusy = isSigning || isConfirming;
 
   return (
