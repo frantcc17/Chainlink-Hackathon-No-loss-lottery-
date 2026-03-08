@@ -17,8 +17,13 @@
 				"type": "string"
 			},
 			{
+				"internalType": "uint256",
+				"name": "_subscriptionId",
+				"type": "uint256"
+			},
+			{
 				"internalType": "address",
-				"name": "_initialOwner",
+				"name": "_vrfCoordinator",
 				"type": "address"
 			}
 		],
@@ -199,22 +204,37 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "owner",
+				"name": "have",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "want",
 				"type": "address"
 			}
 		],
-		"name": "OwnableInvalidOwner",
+		"name": "OnlyCoordinatorCanFulfill",
 		"type": "error"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "account",
+				"name": "have",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "coordinator",
 				"type": "address"
 			}
 		],
-		"name": "OwnableUnauthorizedAccount",
+		"name": "OnlyOwnerOrCoordinator",
 		"type": "error"
 	},
 	{
@@ -226,6 +246,11 @@
 			}
 		],
 		"name": "SafeERC20FailedOperation",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ZeroAddress",
 		"type": "error"
 	},
 	{
@@ -251,6 +276,19 @@
 			}
 		],
 		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "vrfCoordinator",
+				"type": "address"
+			}
+		],
+		"name": "CoordinatorSet",
 		"type": "event"
 	},
 	{
@@ -290,17 +328,55 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "previousOwner",
+				"name": "from",
 				"type": "address"
 			},
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "newOwner",
+				"name": "to",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferRequested",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
 				"type": "address"
 			}
 		],
 		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "winner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "PrizeClaimed",
 		"type": "event"
 	},
 	{
@@ -353,6 +429,25 @@
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "winner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "WinnerPicked",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "sender",
 				"type": "address"
 			},
@@ -383,6 +478,13 @@
 		],
 		"name": "Withdraw",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "acceptOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -465,6 +567,26 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "callbackGasLimit",
+		"outputs": [
+			{
+				"internalType": "uint32",
+				"name": "",
+				"type": "uint32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "claimPrize",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -537,6 +659,32 @@
 			}
 		],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "keyHash",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "lastWinner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -669,6 +817,25 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "players",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
 				"name": "assets",
 				"type": "uint256"
 			}
@@ -745,6 +912,24 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "randomWords",
+				"type": "uint256[]"
+			}
+		],
+		"name": "rawFulfillRandomWords",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
 				"name": "shares",
 				"type": "uint256"
 			},
@@ -772,7 +957,59 @@
 	},
 	{
 		"inputs": [],
-		"name": "renounceOwnership",
+		"name": "requestConfirmations",
+		"outputs": [
+			{
+				"internalType": "uint16",
+				"name": "",
+				"type": "uint16"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "requestRandomWinner",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "s_subscriptionId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "s_vrfCoordinator",
+		"outputs": [
+			{
+				"internalType": "contract IVRFCoordinatorV2Plus",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_vrfCoordinator",
+				"type": "address"
+			}
+		],
+		"name": "setCoordinator",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -899,13 +1136,32 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "newOwner",
+				"name": "to",
 				"type": "address"
 			}
 		],
 		"name": "transferOwnership",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "winnings",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
