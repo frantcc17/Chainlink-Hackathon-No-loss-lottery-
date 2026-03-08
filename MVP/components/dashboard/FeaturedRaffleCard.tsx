@@ -50,13 +50,18 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
 
   // 1. COMPRAR ENTRADAS (Deposit)
   const handleDeposit = async () => {
-    try {
-      const amount = parseUnits(raffle.ticketPrice.toString(), 6);
-      await writeContractAsync({ address: USDC_ADDRESS, abi: erc20Abi, functionName: 'approve', args: [VAULT_ADDRESS, amount] });
-      await writeContractAsync({ address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'deposit', args: [amount, address] });
-    } catch (e) { console.error(e); }
-  };
-
+  try {
+    const amount = parseUnits(raffle.ticketPrice.toString(), 6);
+    
+    // ERROR COMÚN: No pasar el segundo argumento 'address'
+    await writeContractAsync({ 
+      address: VAULT_ADDRESS, 
+      abi: prizePoolAbi, 
+      functionName: 'deposit', 
+      args: [amount, address] // <--- Asegúrate de que 'address' no sea undefined
+    });
+  } catch (e) { console.error(e); }
+};
   // 2. RETIRAR CAPITAL (Redeem/Withdraw)
   const handleWithdraw = async () => {
     if (!userBalance) return;
