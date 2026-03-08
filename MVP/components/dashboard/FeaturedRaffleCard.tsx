@@ -50,32 +50,55 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
 
   // 1. COMPRAR ENTRADAS (Deposit)
   const handleDeposit = async () => {
-  try {
-    const amount = parseUnits(raffle.ticketPrice.toString(), 6);
-    
-    // ERROR COMÚN: No pasar el segundo argumento 'address'
+    if (!address) return;
+    try {
+      const amount = parseUnits(raffle.ticketPrice.toString(), 6);
+      
+      // Primero Approve
+      await writeContractAsync({ 
+        address: USDC_ADDRESS, 
+        abi: erc20Abi, 
+        functionName: 'approve', 
+        args: [VAULT_ADDRESS, amount] 
+      });
+
+      // Luego Deposit
+      await writeContractAsync({ 
+        address: VAULT_ADDRESS, 
+        abi: prizePoolAbi, 
+        functionName: 'deposit', 
+        args: [amount, address] 
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  // 2. RETIRAR CAPITAL (Redeem)
+  const handleWithdraw = async () => {
+    if (!userBalance || !address) return;
     await writeContractAsync({ 
       address: VAULT_ADDRESS, 
       abi: prizePoolAbi, 
-      functionName: 'deposit', 
-      args: [amount, address] // <--- Asegúrate de que 'address' no sea undefined
+      functionName: 'redeem', 
+      args: [userBalance, address, address] 
     });
-  } catch (e) { console.error(e); }
-};
-  // 2. RETIRAR CAPITAL (Redeem/Withdraw)
-  const handleWithdraw = async () => {
-    if (!userBalance) return;
-    await writeContractAsync({ address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'redeem', args: [userBalance, address, address] });
   };
 
-  // 3. RECLAMAR PREMIO (Claim)
+  // 3. RECLAMAR PREMIO (Claim) - ELIMINADO 'args' PARA EVITAR ERROR .length
   const handleClaim = async () => {
-    await writeContractAsync({ address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'claimPrize' });
+    await writeContractAsync({ 
+      address: VAULT_ADDRESS, 
+      abi: prizePoolAbi, 
+      functionName: 'claimPrize' 
+    });
   };
 
-  // 4. LANZAR SORTEO (Solo Owner - Chainlink VRF)
+  // 4. LANZAR SORTEO (Admin) - ELIMINADO 'args' PARA EVITAR ERROR .length
   const handleRequestWinner = async () => {
-    await writeContractAsync({ address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'requestRandomWinner' });
+    await writeContractAsync({ 
+      address: VAULT_ADDRESS, 
+      abi: prizePoolAbi, 
+      functionName: 'requestRandomWinner' 
+    });
   };
 
   const isBusy = isSigning || isConfirming;
@@ -83,7 +106,6 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-cyan-500/20 bg-slate-900/50 p-6 space-y-6 backdrop-blur-sm">
-      {/* Header & User Stats */}
       <div className="flex justify-between items-start">
         <div>
           <span className="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold">Featured Raffle</span>
@@ -99,15 +121,13 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
         )}
       </div>
 
-      {/* Main Stats */}
       <div className="grid grid-cols-3 gap-4">
         <StatItem icon={<Ticket size={16} />} label="Ticket" value={`${raffle.ticketPrice} USDC`} />
         <StatItem icon={<TrendingUp size={16} />} label="Total Pool" value={totalAssets ? `${Number(formatUnits(totalAssets as bigint, 6)).toLocaleString()} USDC` : "0.00"} />
         <StatItem icon={<Users size={16} />} label="Protocol" value="Ondo Finance" />
       </div>
 
-      {/* Winner Alert (Si el usuario tiene premios pendientes) */}
-      {Number(userWinnings) > 0 && (
+      {userWinnings && BigInt(userWinnings as string) > 0n && (
         <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 flex items-center justify-between animate-pulse">
           <div className="flex items-center gap-3">
             <Gift className="text-green-400" />
@@ -120,7 +140,6 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
         </div>
       )}
 
-      {/* Actions */}
       <div className="space-y-3">
         <div className="flex gap-2">
           <Button onClick={handleDeposit} disabled={isBusy} className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
@@ -128,14 +147,13 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
             Buy Entries
           </Button>
 
-          {Number(userBalance) > 0 && (
+          {userBalance && BigInt(userBalance as string) > 0n && (
             <Button onClick={handleWithdraw} variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-12" title="Withdraw Capital">
               <LogOut size={18} />
             </Button>
           )}
         </div>
 
-        {/* Owner Only: Chainlink Draw */}
         {isOwner && (
           <Button onClick={handleRequestWinner} variant="outline" className="w-full border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10 gap-2 border-dashed">
             <Dices size={16} />
@@ -144,10 +162,9 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
         )}
       </div>
 
-      {/* Last Winner Footer */}
       {lastWinner && lastWinner !== '0x0000000000000000000000000000000000000000' && (
         <p className="text-[10px] text-center text-gray-500 font-mono italic">
-          Last Winner: <span className="text-gray-300">{lastWinner.slice(0, 6)}...{lastWinner.slice(-4)}</span>
+          Last Winner: <span className="text-gray-300">{(lastWinner as string).slice(0, 6)}...{(lastWinner as string).slice(-4)}</span>
         </p>
       )}
     </div>
