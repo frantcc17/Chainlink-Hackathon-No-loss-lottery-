@@ -31,25 +31,48 @@ export function FeaturedRaffleCard({ raffle }: FeaturedRaffleCardProps) {
     isSuccess 
   } = useWaitForTransactionReceipt({ hash });
 
- const handleAction = async () => {
+const handleAction = async () => {
+  // 1. Validaciones previas
+  if (!address) {
+    alert("Por favor, conecta tu wallet primero.");
+    return;
+  }
+
   try {
-    // 1. Limpiamos el ID por si acaso sigue viniendo como "raffle-001"
-    const numericId = raffle.id.replace(/\D/g, "");
+    // 2. Preparar los datos
+    // Convertimos el precio del ticket (ej: 10) a 6 decimales (formato USDC)
+    const assetsToDeposit = parseUnits(raffle.ticketPrice.toString(), 6);
     
-    console.log("Datos que se enviarán:", {
-      id: numericId,
-      price: raffle.ticketPrice,
-      address: 'TU_DIRECCION_AQUI'
+    console.log("Iniciando depósito en el Vault...");
+
+    // 3. Ejecutar la función 'deposit' del estándar ERC4626
+    // Esta función pública llamará internamente a tu '_deposit' con el guion bajo
+    await writeContract({
+      address: '0xTU_DIRECCION_DEL_VAULT_AQUI', // <--- PEGA AQUÍ LA ADDRESS DE REMIX
+      abi: prizePoolAbi,
+      functionName: 'deposit', 
+      args: [
+        assetsToDeposit, // Cantidad de activos (assets)
+        address          // Dirección que recibe los shares (receiver)
+      ],
+      // NOTA: No usamos 'value' porque enviamos USDC, no ETH nativo.
     });
 
-    // 2. Llamada al contrato
-    await writeContract({
-      address: '0x...', // REVISA: Que esta sea la dirección del contrato desplegado
-      abi: prizePoolAbi,
-      functionName: 'enterRaffle', // REVISA: Que el nombre sea igual en Remix
-      args: [BigInt(numericId)],
-      value: parseUnits(raffle.ticketPrice.toString(), 6), 
-    });
+    console.log("Solicitud de firma enviada a la wallet");
+
+  } catch (error: any) {
+    console.error("Error detallado:", error);
+    
+    // Mensajes de error amigables
+    if (error.message.includes("user rejected")) {
+      alert("Transacción cancelada por el usuario.");
+    } else if (error.message.includes("allowance") || error.message.includes("insufficient inheritance")) {
+      alert("Error: Debes aprobar (Approve) el gasto de USDC antes de depositar.");
+    } else {
+      alert("Error en la transacción: " + (error.shortMessage || "Consulta la consola para más detalles"));
+    }
+  }
+};
 
   } catch (error: any) {
     // ESTO VA A MOSTRAR EL ERROR EN ROJO PERO MÁS CLARO
