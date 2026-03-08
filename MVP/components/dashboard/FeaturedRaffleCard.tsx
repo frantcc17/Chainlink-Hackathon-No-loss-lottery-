@@ -1,5 +1,4 @@
-Aquí tienes el archivo actualizado para el nuevo contrato PrizePool. Los cambios principales son: totalAssets → currentPrizePool, eliminado balanceOf y deposit/redeem, y requestRandomWinner → startDraw:
-tsx"use client";
+"use client";
 
 import { Ticket, TrendingUp, Users, Loader2, Dices, Gift } from "lucide-react";
 import { Raffle } from "@/stores/raffleStore";
