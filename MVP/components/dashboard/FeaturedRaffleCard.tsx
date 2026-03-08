@@ -38,8 +38,8 @@ export function FeaturedRaffleCard({ raffle }: FeaturedRaffleCardProps) {
     }
 
     // --- CONFIGURACIÓN DE DIRECCIONES ---
-    const VAULT_ADDRESS = '0xTU_DIRECCION_DEL_VAULT_AQUI'; 
-    const USDC_ADDRESS = '0xTU_DIRECCION_DEL_USDC_AQUI'; 
+    const VAULT_ADDRESS = '0xd9145CCE52D386f254917e481eB44e9943F39138'; 
+    const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'; 
 
     try {
       const assetsToDeposit = parseUnits(raffle.ticketPrice.toString(), 6);
