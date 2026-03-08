@@ -31,20 +31,21 @@ export function FeaturedRaffleCard({ raffle }: FeaturedRaffleCardProps) {
     isSuccess 
   } = useWaitForTransactionReceipt({ hash });
 
-  const handleAction = () => {
-    if (!isConnected) {
-      alert("Please connect your wallet");
-      return;
-    }
+ // Ubicación: components/dashboard/FeaturedRaffleCard.tsx
 
-    writeContract({
-      address: '0x0000000000000000000000000000000000000000', // Pon tu dirección real aquí
-      abi: prizePoolAbi,
-      functionName: 'enterRaffle',
-      args: [BigInt(raffle.id)],
-      value: parseUnits(raffle.ticketPrice.toString(), 6), 
-    });
-  };
+const handleAction = () => {
+  // 1. Limpiamos el ID: si es "raffle-001", se convierte en "001"
+  const numericId = raffle.id.replace(/\D/g, ""); 
+
+  // 2. Ejecutamos la transacción
+  writeContract({
+    address: '0xTU_DIRECCION_DEL_CONTRATO', // Asegúrate de tener la dirección aquí
+    abi: prizePoolAbi,
+    functionName: 'enterRaffle',
+    args: [BigInt(numericId)], // Ahora pasamos el número limpio como BigInt
+    value: parseUnits(raffle.ticketPrice.toString(), 6), 
+  });
+};
 
   const isBusy = isSigning || isConfirming;
 
