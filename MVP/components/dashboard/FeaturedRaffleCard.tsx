@@ -1,4 +1,5 @@
-"use client";
+Aquí tienes el código corregido con args: [] en las dos funciones problemáticas:
+tsx"use client";
 
 import { Ticket, TrendingUp, Users, Loader2, CheckCircle2, LogOut, Dices, Gift } from "lucide-react";
 import { Raffle } from "@/stores/raffleStore";
@@ -83,21 +84,23 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
     });
   };
 
-  // 3. RECLAMAR PREMIO (Claim) - ELIMINADO 'args' PARA EVITAR ERROR .length
+  // 3. RECLAMAR PREMIO (Claim) ✅ CORREGIDO: args: []
   const handleClaim = async () => {
     await writeContractAsync({ 
       address: VAULT_ADDRESS, 
       abi: prizePoolAbi, 
-      functionName: 'claimPrize' 
+      functionName: 'claimPrize',
+      args: []
     });
   };
 
-  // 4. LANZAR SORTEO (Admin) - ELIMINADO 'args' PARA EVITAR ERROR .length
+  // 4. LANZAR SORTEO (Admin) ✅ CORREGIDO: args: []
   const handleRequestWinner = async () => {
     await writeContractAsync({ 
       address: VAULT_ADDRESS, 
       abi: prizePoolAbi, 
-      functionName: 'requestRandomWinner' 
+      functionName: 'requestRandomWinner',
+      args: []
     });
   };
 
