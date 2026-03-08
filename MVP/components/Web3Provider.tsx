@@ -1,22 +1,16 @@
 "use client";
-
 import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
+import { sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 
 const config = createConfig(
   getDefaultConfig({
-    // Elige las redes donde desplegaste tus contratos
-    chains: [mainnet, sepolia],
+    chains: [sepolia],
     transports: {
-      [mainnet.id]: http(),
-      [sepolia.id]: http(),
+      [sepolia.id]: http("https://rpc.sepolia.org"),
     },
-
-    // Consigue uno gratis en https://cloud.walletconnect.com/
-    walletConnectProjectId: "TU_PROJECT_ID", 
-
+    walletConnectProjectId: "2b5a1c5c3e0a4b7d8f9e0a1b2c3d4e5f",
     appName: "Investment Lottery",
     appDescription: "Web3 Raffle Protocol powered by Chainlink",
   }),
