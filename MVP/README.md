@@ -88,7 +88,40 @@ http://localhost:3000/dashboard?debug=1
 │   └── uiStore.ts
 └── utils/index.ts
 ```
+# PrizePool Automation (Chainlink Workflows)
 
+This project implements an **automated prize pool draw system on Ethereum**, using **Chainlink Workflows, Chainlink Automation, and Chainlink VRF** to execute periodic draws in a **decentralized and verifiably random way**.
+
+The goal of this project is to demonstrate how **on-chain automation can be combined with verifiable randomness** to build fully autonomous systems such as decentralized lotteries, reward distributions, or incentive mechanisms.
+
+---
+
+# System Overview
+
+The workflow automates the entire draw process.
+
+## 1. Automatic Trigger
+
+A **cron trigger** executes the workflow on a scheduled basis (for example, weekly).  
+This allows the system to run **without manual intervention**.
+
+## 2. Condition Verification
+
+Before starting the draw, the workflow verifies that the prize pool meets the required conditions, such as:
+
+- There are registered participants
+- The prize pool contains sufficient funds
+- The minimum time between draws has passed
+
+If the conditions are not satisfied, the workflow simply terminates without executing any action.
+
+## 3. Starting the Draw
+
+When the required conditions are met, the workflow calls the smart contract function that starts the draw process.
+
+```solidity
+startDraw()
+startDraw()
 ## 🔗 Web3 Integration Points
 
 Search `// TODO:` comments for Chainlink integration spots:
