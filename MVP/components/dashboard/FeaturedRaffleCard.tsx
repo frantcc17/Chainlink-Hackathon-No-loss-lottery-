@@ -1,12 +1,11 @@
-"use client";
+Aquí tienes el archivo actualizado para el nuevo contrato PrizePool. Los cambios principales son: totalAssets → currentPrizePool, eliminado balanceOf y deposit/redeem, y requestRandomWinner → startDraw:
+tsx"use client";
 
-import { Ticket, TrendingUp, Users, Loader2, CheckCircle2, LogOut, Dices, Gift } from "lucide-react";
+import { Ticket, TrendingUp, Users, Loader2, Dices, Gift } from "lucide-react";
 import { Raffle } from "@/stores/raffleStore";
 import { Button } from "@/components/ui/Button";
-import { Countdown } from "@/components/ui/Countdown";
 import { formatUnits, parseUnits } from 'viem';
 
-// --- WEB3 HOOKS ---
 import { 
   useWriteContract, 
   useWaitForTransactionReceipt, 
@@ -19,92 +18,83 @@ import erc20Abi from '@/utils/abis/erc20.json';
 export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
   const { address, isConnected } = useAccount();
 
-  // --- CONFIGURACIÓN DE DIRECCIONES ---
-  const VAULT_ADDRESS = '0x9A84568a5EAAEa0363527E9dBB5AeE7d8324df59' as `0x${string}`; 
+  const PRIZE_POOL_ADDRESS = '0x9A84568a5EAAEa0363527E9dBB5AeE7d8324df59' as `0x${string}`; 
   const USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' as `0x${string}`; 
 
-  // --- LECTURAS (READS) ---
-  const { data: totalAssets, refetch: refetchPool } = useReadContract({
-    address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'totalAssets',
-  });
-  const { data: userBalance, refetch: refetchBalance } = useReadContract({
-    address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'balanceOf', args: address ? [address] : undefined,
+  // --- LECTURAS ---
+  const { data: currentPrizePool, refetch: refetchPool } = useReadContract({
+    address: PRIZE_POOL_ADDRESS, abi: prizePoolAbi, functionName: 'currentPrizePool',
   });
   const { data: userWinnings, refetch: refetchWinnings } = useReadContract({
-    address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'winnings', args: address ? [address] : undefined,
+    address: PRIZE_POOL_ADDRESS, abi: prizePoolAbi, functionName: 'winnings', 
+    args: address ? [address] : undefined,
   });
   const { data: lastWinner } = useReadContract({
-    address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'lastWinner',
+    address: PRIZE_POOL_ADDRESS, abi: prizePoolAbi, functionName: 'lastWinner',
   });
   const { data: ownerAddress } = useReadContract({
-    address: VAULT_ADDRESS, abi: prizePoolAbi, functionName: 'owner',
+    address: PRIZE_POOL_ADDRESS, abi: prizePoolAbi, functionName: 'owner',
+  });
+  const { data: isPlayerData } = useReadContract({
+    address: PRIZE_POOL_ADDRESS, abi: prizePoolAbi, functionName: 'isPlayer',
+    args: address ? [address] : undefined,
   });
 
-  // --- ESCRITURA (WRITES) ---
-  const { data: hash, isPending: isSigning, writeContractAsync, error: writeError } = useWriteContract();
+  // --- ESCRITURA ---
+  const { data: hash, isPending: isSigning, writeContractAsync } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ 
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ 
     hash, 
-    onBlock: () => { refetchPool(); refetchBalance(); refetchWinnings(); } 
+    onBlock: () => { refetchPool(); refetchWinnings(); } 
   });
 
-  // 1. COMPRAR ENTRADAS (Deposit)
+  // 1. UNIRSE AL SORTEO (Approve USDC + addPlayer)
   const handleDeposit = async () => {
     if (!address) return;
     try {
       const amount = parseUnits(raffle.ticketPrice.toString(), 6);
       
-      // Primero Approve
+      // Approve USDC
       await writeContractAsync({ 
         address: USDC_ADDRESS, 
         abi: erc20Abi, 
         functionName: 'approve', 
-        args: [VAULT_ADDRESS, amount] 
+        args: [PRIZE_POOL_ADDRESS, amount] 
       });
 
-      // Luego Deposit
+      // Añadirse como jugador
       await writeContractAsync({ 
-        address: VAULT_ADDRESS, 
+        address: PRIZE_POOL_ADDRESS, 
         abi: prizePoolAbi, 
-        functionName: 'deposit', 
-        args: [amount, address] 
+        functionName: 'addPlayer', 
+        args: [address] 
       });
     } catch (e) { console.error(e); }
   };
 
-  // 2. RETIRAR CAPITAL (Redeem)
-  const handleWithdraw = async () => {
-    if (!userBalance || !address) return;
-    await writeContractAsync({ 
-      address: VAULT_ADDRESS, 
-      abi: prizePoolAbi, 
-      functionName: 'redeem', 
-      args: [userBalance, address, address] 
-    });
-  };
-
-  // 3. RECLAMAR PREMIO (Claim) ✅ CORREGIDO: args: []
+  // 2. RECLAMAR PREMIO
   const handleClaim = async () => {
     await writeContractAsync({ 
-      address: VAULT_ADDRESS, 
+      address: PRIZE_POOL_ADDRESS, 
       abi: prizePoolAbi, 
       functionName: 'claimPrize',
       args: []
     });
   };
 
-  // 4. LANZAR SORTEO (Admin) ✅ CORREGIDO: args: []
+  // 3. LANZAR SORTEO (Admin)
   const handleRequestWinner = async () => {
     await writeContractAsync({ 
-      address: VAULT_ADDRESS, 
+      address: PRIZE_POOL_ADDRESS, 
       abi: prizePoolAbi, 
-      functionName: 'requestRandomWinner',
+      functionName: 'startDraw',
       args: []
     });
   };
 
   const isBusy = isSigning || isConfirming;
   const isOwner = address?.toLowerCase() === (ownerAddress as string)?.toLowerCase();
+  const isAlreadyPlayer = isPlayerData as boolean;
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-cyan-500/20 bg-slate-900/50 p-6 space-y-6 backdrop-blur-sm">
@@ -115,9 +105,9 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
         </div>
         {isConnected && (
           <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-2 text-right">
-            <p className="text-[9px] text-gray-400 uppercase">My Tickets</p>
+            <p className="text-[9px] text-gray-400 uppercase">Status</p>
             <p className="text-sm font-mono font-bold text-cyan-400">
-              {userBalance ? Number(formatUnits(userBalance as bigint, 6)).toFixed(2) : "0.00"}
+              {isAlreadyPlayer ? "✓ Entered" : "Not entered"}
             </p>
           </div>
         )}
@@ -125,7 +115,11 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
 
       <div className="grid grid-cols-3 gap-4">
         <StatItem icon={<Ticket size={16} />} label="Ticket" value={`${raffle.ticketPrice} USDC`} />
-        <StatItem icon={<TrendingUp size={16} />} label="Total Pool" value={totalAssets ? `${Number(formatUnits(totalAssets as bigint, 6)).toLocaleString()} USDC` : "0.00"} />
+        <StatItem 
+          icon={<TrendingUp size={16} />} 
+          label="Prize Pool" 
+          value={currentPrizePool ? `${Number(formatUnits(currentPrizePool as bigint, 6)).toLocaleString()} USDC` : "0.00 USDC"} 
+        />
         <StatItem icon={<Users size={16} />} label="Protocol" value="Ondo Finance" />
       </div>
 
@@ -143,21 +137,21 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
       )}
 
       <div className="space-y-3">
-        <div className="flex gap-2">
-          <Button onClick={handleDeposit} disabled={isBusy} className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-400 text-black font-bold">
-            {isBusy ? <Loader2 className="animate-spin" /> : <Ticket size={18} />}
-            Buy Entries
-          </Button>
-
-          {userBalance && BigInt(userBalance as string) > 0n && (
-            <Button onClick={handleWithdraw} variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-12" title="Withdraw Capital">
-              <LogOut size={18} />
-            </Button>
-          )}
-        </div>
+        <Button 
+          onClick={handleDeposit} 
+          disabled={isBusy || isAlreadyPlayer} 
+          className="w-full h-12 bg-cyan-500 hover:bg-cyan-400 text-black font-bold"
+        >
+          {isBusy ? <Loader2 className="animate-spin" /> : <Ticket size={18} />}
+          {isAlreadyPlayer ? "Already Entered" : "Buy Entries"}
+        </Button>
 
         {isOwner && (
-          <Button onClick={handleRequestWinner} variant="outline" className="w-full border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10 gap-2 border-dashed">
+          <Button 
+            onClick={handleRequestWinner} 
+            variant="outline" 
+            className="w-full border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10 gap-2 border-dashed"
+          >
             <Dices size={16} />
             Request Chainlink Winner
           </Button>
