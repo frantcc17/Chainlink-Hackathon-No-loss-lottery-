@@ -8,7 +8,7 @@ const config = createConfig(
   getDefaultConfig({
     chains: [sepolia],
     transports: {
-      [sepolia.id]: http("https://rpc.sepolia.org"),
+      [sepolia.id]: http("https://eth-sepolia.g.alchemy.com/v2/xl7dgSIONDLK3oZ3BMieh"),
     },
     walletConnectProjectId: "2b5a1c5c3e0a4b7d8f9e0a1b2c3d4e5f",
     appName: "Investment Lottery",
