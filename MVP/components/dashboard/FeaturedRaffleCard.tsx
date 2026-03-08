@@ -21,7 +21,7 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
 
   // --- CONFIGURACIÓN DE DIRECCIONES ---
   const VAULT_ADDRESS = '0x9A84568a5EAAEa0363527E9dBB5AeE7d8324df59' as `0x${string}`; 
-  const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' as `0x${string}`; 
+  const USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' as `0x${string}`; 
 
   // --- LECTURAS (READS) ---
   const { data: totalAssets, refetch: refetchPool } = useReadContract({
