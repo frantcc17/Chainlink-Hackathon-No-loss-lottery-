@@ -9,13 +9,15 @@ import {
   useWriteContract, 
   useWaitForTransactionReceipt, 
   useAccount, 
-  useReadContract 
+  useReadContract,
+  useSwitchChain
 } from 'wagmi';
 import { prizePoolAbi } from '@/utils/abis/prizePool'; 
 import erc20Abi from '@/utils/abis/erc20.json'; 
 
 export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
   const { address, isConnected } = useAccount();
+  const { switchChain } = useSwitchChain();
 
   const PRIZE_POOL_ADDRESS = '0x9A84568a5EAAEa0363527E9dBB5AeE7d8324df59' as `0x${string}`; 
   const USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' as `0x${string}`; 
@@ -47,13 +49,15 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
     onBlock: () => { refetchPool(); refetchWinnings(); } 
   });
 
-  // 1. UNIRSE AL SORTEO (Approve USDC + addPlayer)
+  // 1. UNIRSE AL SORTEO
   const handleDeposit = async () => {
     if (!address) return;
     try {
+      // ✅ Forzar Sepolia antes de cualquier transacción
+      await switchChain({ chainId: 11155111 });
+
       const amount = parseUnits(raffle.ticketPrice.toString(), 6);
       
-      // Approve USDC
       await writeContractAsync({ 
         address: USDC_ADDRESS, 
         abi: erc20Abi, 
@@ -61,7 +65,6 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
         args: [PRIZE_POOL_ADDRESS, amount] 
       });
 
-      // Añadirse como jugador
       await writeContractAsync({ 
         address: PRIZE_POOL_ADDRESS, 
         abi: prizePoolAbi, 
@@ -73,22 +76,28 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
 
   // 2. RECLAMAR PREMIO
   const handleClaim = async () => {
-    await writeContractAsync({ 
-      address: PRIZE_POOL_ADDRESS, 
-      abi: prizePoolAbi, 
-      functionName: 'claimPrize',
-      args: []
-    });
+    try {
+      await switchChain({ chainId: 11155111 });
+      await writeContractAsync({ 
+        address: PRIZE_POOL_ADDRESS, 
+        abi: prizePoolAbi, 
+        functionName: 'claimPrize',
+        args: []
+      });
+    } catch (e) { console.error(e); }
   };
 
   // 3. LANZAR SORTEO (Admin)
   const handleRequestWinner = async () => {
-    await writeContractAsync({ 
-      address: PRIZE_POOL_ADDRESS, 
-      abi: prizePoolAbi, 
-      functionName: 'startDraw',
-      args: []
-    });
+    try {
+      await switchChain({ chainId: 11155111 });
+      await writeContractAsync({ 
+        address: PRIZE_POOL_ADDRESS, 
+        abi: prizePoolAbi, 
+        functionName: 'startDraw',
+        args: []
+      });
+    } catch (e) { console.error(e); }
   };
 
   const isBusy = isSigning || isConfirming;
