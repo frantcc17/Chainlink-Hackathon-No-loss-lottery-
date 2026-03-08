@@ -20,7 +20,7 @@ export function FeaturedRaffleCard({ raffle }: { raffle: Raffle }) {
   const { address, isConnected } = useAccount();
 
   // --- CONFIGURACIÓN DE DIRECCIONES ---
-  const VAULT_ADDRESS = '0xd9145CCE52D386f254917e481eB44e9943F39138' as `0x${string}`; 
+  const VAULT_ADDRESS = '0x9A84568a5EAAEa0363527E9dBB5AeE7d8324df59' as `0x${string}`; 
   const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' as `0x${string}`; 
 
   // --- LECTURAS (READS) ---
